@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>珠峰聊天室</title>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <style>
+        ul li span{
+            color:blue;
+        }
+    </style>
+</head>
+<body style="margin-top: 30px">
+<div class="container">
+    <div class="panel panel-success">
+        <div class="panel-heading">
+            <button id="yellow"  onclick="join('yellow')" class="btn btn-warning">进入黄房间</button>
+            <button id="red" onclick="join('red')" class="btn btn-danger">进入红房间</button>
+        </div>
+        <div class="panel-body">
+             <ul id="messages" class="list-group">
+             </ul>
+        </div>
+        <div class="panel-footer">
+            <input onkeydown="confirm(event)" id="content" type="text" class="form-control">
+            <button onclick="send()" class="btn btn-primary">发言</button>
+        </div>
+    </div>
+</div>
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    window.onload = function(){
+        var socket = io.connect('ws://localhost:9090/');
+        socket.on('message',function(msgObj){
+            var messages = document.querySelector('#messages');
+            var message = document.createElement('li');
+            message.className = 'list-group-item';
+            message.innerHTML = `<span>${msgObj.username}</span>:${msgObj.msg}`;
+            messages.appendChild(message);
+        });
+
+        window.send = function(){
+            var content = document.querySelector('#content').value;
+            socket.send(content);// socket.emit('message',content)
+            document.querySelector('#content').value = '';
+        }
+        window.confirm = function(event){
+            //取得按下键的编码
+            var keyCode = event.which || event.keyCode;
+            if(keyCode == 13){ //如果是回车键的话
+                send();
+            }
+        }
+
+        window.join = function(roomName){
+            socket.emit('join',roomName);
+            var btn = document.querySelector('#'+roomName);
+            var btns = document.getElementsByTagName('button');
+            Array.from(btns).forEach(function(item){
+                item.className = item.className.replace('disabled','');
+            });
+            btn.className = btn.className+' disabled';
+        }
+    }
+</script>
+</html>
